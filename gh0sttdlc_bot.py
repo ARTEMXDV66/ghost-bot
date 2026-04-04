@@ -1,0 +1,173 @@
+import asyncio, sqlite3, secrets, urllib.parse, random, string, requests, threading
+from datetime import datetime, timedelta
+from flask import Flask, request
+from aiogram import Bot, Dispatcher, types
+from aiogram.filters import Command
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+
+BOT_TOKEN = 8747534538:AAFY4XFOAidJQisB6FxuSKb_sSGa736R7hI
+WALLET_NUMBER = 4100118548432704
+SECRET_KEY = ghostkey1408secret
+APK_LINK = https://t.me/+ZjTtfe-9i282MmQy
+
+conn = sqlite3.connect('shop.db', check_same_thread=False)
+c = conn.cursor()
+c.execute('CREATE TABLE IF NOT EXISTS orders (id TEXT, uid INT, amount INT, days INT, status TEXT, key TEXT)')
+c.execute('CREATE TABLE IF NOT EXISTS subs (uid INT PRIMARY KEY, expires TEXT)')
+conn.commit()
+
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher()
+app = Flask(__name__)
+
+def key(): return f"GHOST-{''.join(random.choices(string.ascii_uppercase, k=10))}"
+def price(x): return round(x / 0.97, 2)
+
+def menu():
+    return ReplyKeyboardMarkup(keyboard=[
+        [KeyboardButton(text="300₽ 7д"), KeyboardButton(text="600₽ 14д")],
+        [KeyboardButton(text="1200₽ 30д")],
+        [KeyboardButton(text="👤 Профиль"), KeyboardButton(text="📜 История"), KeyboardButton(text="📥 APK")]
+    ], resize_keyboard=True)
+
+def sub_status(uid):
+    c.execute("SELECT expires FROM subs WHERE uid=?", (uid,))
+    row = c.fetchone()
+    if not row: return None
+    exp = datetime.fromisoformat(row[0])
+    if exp < datetime.now():
+        c.execute("DELETE FROM subs WHERE uid=?", (uid,))
+        conn.commit()
+        return None
+    return (exp - datetime.now()).days
+
+def activate(uid, days):
+    c.execute("SELECT expires FROM subs WHERE uid=?", (uid,))
+    row = c.fetchone()
+    now = datetime.now()
+    if row and datetime.fromisoformat(row[0]) > now:
+        new = datetime.fromisoformat(row[0]) + timedelta(days=days)
+    else:
+        new = now + timedelta(days=days)
+    c.execute("INSERT OR REPLACE INTO subs VALUES (?,?)", (uid, new.isoformat()))
+    conn.commit()
+    return new
+
+@dp.message(Command("start"))
+async def start(m): await m.answer("👻 GHOST DLC\nВыбери тариф:", reply_markup=menu())
+
+@dp.message(lambda m: m.text == "📥 APK")
+async def apk(m):
+    kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton("📥 Скачать", url=APK_LINK)]])
+    await m.answer("📱 Скачай APK:", reply_markup=kb)
+
+@dp.message(lambda m: m.text in ["300₽ 7д", "600₽ 14д", "1200₽ 30д"])
+async def buy(m):
+    days = 7 if "300" in m.text else 14 if "600" in m.text else 30
+    amount = 300 if days==7 else 600 if days==14 else 1200
+    pay = price(amount)
+    oid = f"{m.from_user.id}_{int(datetime.now().timestamp())}"
+    k = key()
+    c.execute("INSERT INTO orders VALUES (?,?,?,?,?,?)", (oid, m.from_user.id, amount, days, "waiting", k))
+    conn.commit()
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"💳 Оплатить {pay}₽", callback_data=f"pay_{oid}")],
+        [InlineKeyboardButton("❌ Отмена", callback_data="cancel")]
+    ])
+    await m.answer(f"✅ {amount}₽\n💳 К оплате: {pay}₽", reply_markup=kb)
+
+@dp.callback_query(lambda c: c.data and c.data.startswith("pay_"))
+async def pay(c):
+    oid = c.data.replace("pay_", "")
+    c.execute("SELECT amount FROM orders WHERE id=?", (oid,))
+    row = c.fetchone()
+    if not row: return await c.answer("Ошибка")
+    amount = row[0]
+    pay_amount = price(amount)
+    params = {"receiver": WALLET_NUMBER, "quickpay-form": "button", "paymentType": "AC", "sum": pay_amount, "label": oid, "successURL": "https://t.me"}
+    url = "https://yoomoney.ru/quickpay/confirm?" + urllib.parse.urlencode(params)
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton("💳 Оплатить", url=url)],
+        [InlineKeyboardButton("🔄 Проверить", callback_data=f"check_{oid}")]
+    ])
+    await c.message.edit_text(f"💳 {pay_amount}₽", reply_markup=kb)
+    await c.answer()
+
+@dp.callback_query(lambda c: c.data and c.data.startswith("check_"))
+async def check(c):
+    oid = c.data.replace("check_", "")
+    c.execute("SELECT uid, status, key FROM orders WHERE id=?", (oid,))
+    row = c.fetchone()
+    if not row: return await c.answer("Ошибка")
+    uid, status, k = row
+    if status == "paid":
+        days = sub_status(uid)
+        await c.message.edit_text(f"✅ Активна! Осталось: {days} дней\nКлюч: {k}")
+        return await c.answer()
+    await c.answer("⏳ Не оплачено", show_alert=True)
+
+@dp.callback_query(lambda c: c.data == "cancel")
+async def cancel(c):
+    await c.message.edit_text("❌ Отменено")
+    await c.message.answer("Главное меню", reply_markup=menu())
+    await c.answer()
+
+@dp.message(lambda m: m.text == "👤 Профиль")
+async def profile(m):
+    days = sub_status(m.from_user.id)
+    if not days: return await m.answer("❌ Нет подписки", reply_markup=menu())
+    c.execute("SELECT key FROM orders WHERE uid=? AND status='paid' ORDER BY rowid DESC LIMIT 1", (m.from_user.id,))
+    row = c.fetchone()
+    k = row[0] if row else "Нет"
+    await m.answer(f"👤 Осталось: {days} дней\n🔑 {k}", reply_markup=menu())
+
+@dp.message(lambda m: m.text == "📜 История")
+async def history(m):
+    c.execute("SELECT amount, status FROM orders WHERE uid=? ORDER BY rowid DESC LIMIT 5", (m.from_user.id,))
+    rows = c.fetchall()
+    if not rows: return await m.answer("📭 Пусто", reply_markup=menu())
+    text = "📜 История:\n"
+    for amount, status in rows:
+        icon = "✅" if status == "paid" else "⏳"
+        text += f"{icon} {amount}₽\n"
+    await m.answer(text, reply_markup=menu())
+
+@app.route('/yoomoney-webhook', methods=['POST'])
+def webhook():
+    data = request.form
+    oid = data.get('label')
+    if data.get('status') == 'success' and oid:
+        c.execute("SELECT uid, days, key FROM orders WHERE id=?", (oid,))
+        row = c.fetchone()
+        if row:
+            uid, days, k = row
+            c.execute("UPDATE orders SET status='paid' WHERE id=?", (oid,))
+            activate(uid, days)
+            conn.commit()
+            try:
+                requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={"chat_id": uid, "text": f"✅ Оплачено!\n\nКлюч: {k}\n\nAPK: {APK_LINK}"})
+            except: pass
+    return "OK", 200
+
+@app.route('/')
+def index(): return "OK"
+
+async def reminders():
+    while True:
+        try:
+            for uid, exp_str in c.execute("SELECT uid, expires FROM subs").fetchall():
+                days = (datetime.fromisoformat(exp_str) - datetime.now()).days
+                if days == 3: await bot.send_message(uid, "⚠️ Осталось 3 дня!")
+            await asyncio.sleep(86400)
+        except: await asyncio.sleep(86400)
+
+def run(): app.run(host='0.0.0.0', port=8080)
+
+async def main():
+    await bot.delete_webhook()
+    threading.Thread(target=run, daemon=True).start()
+    asyncio.create_task(reminders())
+    await dp.start_polling(bot)
+
+if name == "__main__":
+    asyncio.run(main())
