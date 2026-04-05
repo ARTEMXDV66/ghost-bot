@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
-BOT_TOKEN = "8747534538:AAENuDBfLVapBDSbiPK4ONs8LcUZewPedB8"
+BOT_TOKEN = "8747534538:AAHtj6NUcH2DNHPCeDcyQh2apDqSI5u9fuU"
 WALLET_NUMBER = "4100118548432704"
 SECRET_KEY = "TZVRhM5F+MCqSMWeLUtPrEyL"
 APK_LINK = "https://t.me/zjTfte-9i282MmQy"
@@ -163,12 +163,13 @@ async def reminders():
         except:
             await asyncio.sleep(86400)
 
-def run():
-    app.run(host='0.0.0.0', port=8080)
+def run_flask():
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
 
 async def main():
     await bot.delete_webhook()
-    threading.Thread(target=run, daemon=True).start()
+    threading.Thread(target=run_flask, daemon=True).start()
     asyncio.create_task(reminders())
     await dp.start_polling(bot)
 
