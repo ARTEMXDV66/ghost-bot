@@ -8,7 +8,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 BOT_TOKEN = "8747534538:AAEvH_qlquUXlM0p3P2x_hbqZ1SljLPy4wM"
 WALLET_NUMBER = "4100118548432704"
 SECRET_KEY = "Q7lcid9Bzlzwbj73cqDXr2B1"
-APK_LINK = https://t.me/fileghostdlc
+APK_LINK = "https://t.me/fileghostdlc"
 
 conn = sqlite3.connect('shop.db', check_same_thread=False)
 c = conn.cursor()
