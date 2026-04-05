@@ -9,7 +9,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 BOT_TOKEN = 8747534538:AAFY4XFOAidJQisB6FxuSKb_sSGa736R7hI
 WALLET_NUMBER = 4100118548432704
 SECRET_KEY = ghostkey1408secret
-APK_LINK = https://t.me/+ZjTtfe-9i282MmQy
+APK_LINK = "https://t.me/zjTfte-9i282MmQy"
 
 conn = sqlite3.connect('shop.db', check_same_thread=False)
 c = conn.cursor()
