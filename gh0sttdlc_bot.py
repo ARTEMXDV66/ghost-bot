@@ -102,7 +102,8 @@ async def pay(c):
     await c.answer()
 
 @dp.callback_query(lambda c: c.data and c.data.startswith("check_"))
-async def check(c):oid = c.data.replace("check_", "")
+async def check(c):
+    oid = c.data.replace("check_", "")
     c.execute("SELECT uid, status, key FROM orders WHERE id=?", (oid,))
     row = c.fetchone()
     if not row: return await c.answer("Ошибка")
@@ -179,5 +180,5 @@ async def main():
     asyncio.create_task(reminders())
     await dp.start_polling(bot)
 
-if name == "__main__":
+if __name__ == "__main__":
     asyncio.run(main())
