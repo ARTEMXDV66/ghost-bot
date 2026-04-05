@@ -153,16 +153,23 @@ def webhook():
 @app.route('/')
 def index(): return "OK"
 
-async def reminders():
+
+        app2.run(host='0.0.0.0', port=int(os.environ.get("PORT", 8080)))
+    threading.Thread(target=start_flask, daemon=True).start()
+    time.sleep(2)
+    async def reminders():
     while True:
         try:
             for uid, exp_str in c.execute("SELECT uid, expires FROM subs").fetchall():
                 days = (datetime.fromisoformat(exp_str) - datetime.now()).days
-                if days == 3: await bot.send_message(uid, "⚠️ Осталось 3 дня!")
+                if days == 3:
+                    await bot.send_message(uid, "⚠️ Осталось 3 дня!")
             await asyncio.sleep(86400)
-        except: await asyncio.sleep(86400)
+        except:
+            await asyncio.sleep(86400)
 
-def run(): app.run(host='0.0.0.0', port=8080)
+def run():
+    app.run(host='0.0.0.0', port=8080)
 
 async def main():
     await bot.delete_webhook()
@@ -170,5 +177,19 @@ async def main():
     asyncio.create_task(reminders())
     await dp.start_polling(bot)
 
-if __name__ == "__main__":
+if name == "__main__":
+    import threading, time
+    import os
+    
+    def start_flask():
+        from flask import Flask
+        app2 = Flask(__name__)
+        @app2.route('/')
+        def home():
+            return "I'm alive"
+        port = int(os.environ.get("PORT", 8080))
+        app2.run(host='0.0.0.0', port=port)
+    
+    threading.Thread(target=start_flask, daemon=True).start()
+    time.sleep(2)
     asyncio.run(main())
