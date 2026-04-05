@@ -183,16 +183,16 @@ def admin_create_key():
     data = request.json
     if data.get('token') != ADMIN_TOKEN:
         return {"error": "Unauthorized"}, 401
-    
+
     key = data.get('key')
     days = data.get('days')
     from datetime import datetime, timedelta
     expire = (datetime.now() + timedelta(days=days)).isoformat()
-    
-    c.execute("INSERT INTO ghost_keys VALUES (?, ?, ?, ?, ?)", 
+
+    c.execute("INSERT INTO ghost_keys VALUES (?, ?, ?, ?, ?)",
               (key, days, expire, datetime.now().isoformat(), None))
     conn.commit()
-    
+
     return {"key": key, "expire": expire}
 
 @app.route('/admin/list_keys', methods=['GET'])
@@ -200,10 +200,10 @@ def admin_list_keys():
     token = request.args.get('token')
     if token != ADMIN_TOKEN:
         return {"error": "Unauthorized"}, 401
-    
+
     c.execute("SELECT key, days, expire FROM ghost_keys ORDER BY created_at DESC")
     rows = c.fetchall()
-    
+
     keys = []
     for key, days, expire in rows:
         keys.append({
@@ -219,7 +219,7 @@ def admin_delete_key():
     data = request.json
     if data.get('token') != ADMIN_TOKEN:
         return {"error": "Unauthorized"}, 401
-    
+
     c.execute("DELETE FROM ghost_keys WHERE key=?", (data.get('key'),))
     conn.commit()
     return {"success": True}
