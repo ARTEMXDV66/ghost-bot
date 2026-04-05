@@ -15,7 +15,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 
 BOT_TOKEN = "8747534538:AAFykcfZc0ADFPWjSe09iodbWvWKUxJ4Nq0"
 WALLET_NUMBER = "4100112345678901"
-SECRET_KEY = "ghostkey1408secret"
+SECRET_KEY = "TZVRhM5F+MCqSMWeLUtPrEyL"
 APK_LINK = "https://t.me/zjTfte-9i282MmQy"
 
 conn = sqlite3.connect('shop.db', check_same_thread=False)
