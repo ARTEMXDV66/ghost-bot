@@ -1,20 +1,12 @@
-import os
-import asyncio
-import sqlite3
-import secrets
-import urllib.parse
-import random
-import string
-import requests
-import threading
+import os, asyncio, sqlite3, secrets, urllib.parse, random, string, requests, threading
 from datetime import datetime, timedelta
 from flask import Flask, request
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
-BOT_TOKEN = "8747534538:AAFykcfZc0ADFPWjSe09iodbWvWKUxJ4Nq0"
-WALLET_NUMBER = "4100112345678901"
+BOT_TOKEN = "8747534538:AAFY4XFOAidJQisB6FxSuSKb_sSGa736R7hI"
+WALLET_NUMBER = "4100118548432704"
 SECRET_KEY = "TZVRhM5F+MCqSMWeLUtPrEyL"
 APK_LINK = "https://t.me/zjTfte-9i282MmQy"
 
@@ -66,7 +58,7 @@ async def start(m): await m.answer("👻 GHOST DLC\nВыбери тариф:", r
 
 @dp.message(lambda m: m.text == "📥 APK")
 async def apk(m):
-    kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton("📥 Скачать", url=APK_LINK)]])
+    kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="📥 Скачать", url=APK_LINK)]])
     await m.answer("📱 Скачай APK:", reply_markup=kb)
 
 @dp.message(lambda m: m.text in ["300₽ 7д", "600₽ 14д", "1200₽ 30д"])
@@ -79,8 +71,8 @@ async def buy(m):
     c.execute("INSERT INTO orders VALUES (?,?,?,?,?,?)", (oid, m.from_user.id, amount, days, "waiting", k))
     conn.commit()
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(f"💳 Оплатить {pay}₽", callback_data=f"pay_{oid}")],
-        [InlineKeyboardButton("❌ Отмена", callback_data="cancel")]
+        [InlineKeyboardButton(text=f"💳 Оплатить {pay}₽", callback_data=f"pay_{oid}")],
+        [InlineKeyboardButton(text="❌ Отмена", callback_data="cancel")]
     ])
     await m.answer(f"✅ {amount}₽\n💳 К оплате: {pay}₽", reply_markup=kb)
 
@@ -95,8 +87,8 @@ async def pay(c):
     params = {"receiver": WALLET_NUMBER, "quickpay-form": "button", "paymentType": "AC", "sum": pay_amount, "label": oid, "successURL": "https://t.me"}
     url = "https://yoomoney.ru/quickpay/confirm?" + urllib.parse.urlencode(params)
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton("💳 Оплатить", url=url)],
-        [InlineKeyboardButton("🔄 Проверить", callback_data=f"check_{oid}")]
+        [InlineKeyboardButton(text="💳 Оплатить", url=url)],
+        [InlineKeyboardButton(text="🔄 Проверить", callback_data=f"check_{oid}")]
     ])
     await c.message.edit_text(f"💳 {pay_amount}₽", reply_markup=kb)
     await c.answer()
