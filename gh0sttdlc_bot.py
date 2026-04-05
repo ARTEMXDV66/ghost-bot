@@ -77,11 +77,13 @@ async def buy(m):
     await m.answer(f"✅ {amount}₽\n💳 К оплате: {pay}₽", reply_markup=kb)
 
 @dp.callback_query(lambda c: c.data and c.data.startswith("pay_"))
-async def pay(c):
-    oid = c.data.replace("pay_", "")
+async def pay(callback):
+    oid = callback.data.replace("pay_", "")
+    global c
     c.execute("SELECT amount FROM orders WHERE id=?", (oid,))
     row = c.fetchone()
-    if not row: return await c.answer("Ошибка")
+    if not row:
+        return await callback.answer("Ошибка")
     amount = row[0]
     pay_amount = price(amount)
     params = {"receiver": WALLET_NUMBER, "quickpay-form": "button", "paymentType": "AC", "sum": pay_amount, "label": oid, "successURL": "https://t.me"}
@@ -90,9 +92,9 @@ async def pay(c):
         [InlineKeyboardButton(text="💳 Оплатить", url=url)],
         [InlineKeyboardButton(text="🔄 Проверить", callback_data=f"check_{oid}")]
     ])
-    await c.message.edit_text(f"💳 {pay_amount}₽", reply_markup=kb)
-    await c.answer()
-
+    await callback.message.edit_text(f"💳 {pay_amount}₽", reply_markup=kb)
+    await callback.answer()
+  
 @dp.callback_query(lambda c: c.data and c.data.startswith("check_"))
 async def check(c):
     oid = c.data.replace("check_", "")
