@@ -1,5 +1,12 @@
 import os
-import asyncio, sqlite3, secrets, urllib.parse, random, string, requests, threading
+import asyncio
+import sqlite3
+import secrets
+import urllib.parse
+import random
+import string
+import requests
+import threading
 from datetime import datetime, timedelta
 from flask import Flask, request
 from aiogram import Bot, Dispatcher, types
@@ -7,7 +14,7 @@ from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
 BOT_TOKEN = "8747534538:AAFY4XFOAidJQisB6FxSuSKb_sSGa736R7hI"
-WALLET_NUMBER = "4100118548432704"
+WALLET_NUMBER = "4100112345678901"
 SECRET_KEY = "ghostkey1408secret"
 APK_LINK = "https://t.me/zjTfte-9i282MmQy"
 
@@ -95,8 +102,7 @@ async def pay(c):
     await c.answer()
 
 @dp.callback_query(lambda c: c.data and c.data.startswith("check_"))
-async def check(c):
-    oid = c.data.replace("check_", "")
+async def check(c):oid = c.data.replace("check_", "")
     c.execute("SELECT uid, status, key FROM orders WHERE id=?", (oid,))
     row = c.fetchone()
     if not row: return await c.answer("Ошибка")
@@ -153,11 +159,7 @@ def webhook():
 @app.route('/')
 def index(): return "OK"
 
-
-        app2.run(host='0.0.0.0', port=int(os.environ.get("PORT", 8080)))
-    threading.Thread(target=start_flask, daemon=True).start()
-    time.sleep(2)
-    async def reminders():
+async def reminders():
     while True:
         try:
             for uid, exp_str in c.execute("SELECT uid, expires FROM subs").fetchall():
@@ -178,18 +180,4 @@ async def main():
     await dp.start_polling(bot)
 
 if name == "__main__":
-    import threading, time
-    import os
-    
-    def start_flask():
-        from flask import Flask
-        app2 = Flask(__name__)
-        @app2.route('/')
-        def home():
-            return "I'm alive"
-        port = int(os.environ.get("PORT", 8080))
-        app2.run(host='0.0.0.0', port=port)
-    
-    threading.Thread(target=start_flask, daemon=True).start()
-    time.sleep(2)
     asyncio.run(main())
