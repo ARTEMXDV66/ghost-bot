@@ -96,17 +96,19 @@ async def pay(callback):
     await callback.answer()
   
 @dp.callback_query(lambda c: c.data and c.data.startswith("check_"))
-async def check(c):
-    oid = c.data.replace("check_", "")
+async def check(callback):
+    oid = callback.data.replace("check_", "")
+    global c
     c.execute("SELECT uid, status, key FROM orders WHERE id=?", (oid,))
     row = c.fetchone()
-    if not row: return await c.answer("Ошибка")
+    if not row:
+        return await callback.answer("Ошибка")
     uid, status, k = row
     if status == "paid":
         days = sub_status(uid)
-        await c.message.edit_text(f"✅ Активна! Осталось: {days} дней\nКлюч: {k}")
-        return await c.answer()
-    await c.answer("⏳ Не оплачено", show_alert=True)
+        await callback.message.edit_text(f"✅ Активна! Осталось: {days} дней\nКлюч: {k}")
+        return await callback.answer()
+    await callback.answer("⏳ Не оплачено", show_alert=True)
 
 @dp.callback_query(lambda c: c.data == "cancel")
 async def cancel(c):
