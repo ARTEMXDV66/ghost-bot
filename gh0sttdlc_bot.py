@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
-BOT_TOKEN = "8747534538:AAGGC77iG60mICeiOt2-JzJnzcDbwos0frA"
+BOT_TOKEN = "8747534538:AAEJiqkqhOpoI2-loaVNLBVpgsKq-byzwWw"
 WALLET_NUMBER = "4100118548432704"
 SECRET_KEY = "TZVRhM5F+MCqSMWeLUtPrEyL"
 APK_LINK = "https://t.me/zjTfte-9i282MmQy"
